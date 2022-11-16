@@ -1,0 +1,9 @@
+- name: create repo
+  hosts: all
+  remote_user: azureuser
+  become: yes
+  tasks:
+    - name: setup kubeadm environment
+      import_role:
+        name: kubernetes-env-setup
+      become: yes

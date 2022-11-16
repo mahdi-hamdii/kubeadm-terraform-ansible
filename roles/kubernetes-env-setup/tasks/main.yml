@@ -1,0 +1,62 @@
+---
+# tasks file for kubernetes-env-setup
+    - name: disable swap memory
+      shell: swapoff -a && sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+    - name: allowing ports
+      shell: ufw disable
+    - name: install packages
+      apt:
+        pkg:
+          - ca-certificates
+          - curl 
+          - gnupg 
+          - lsb-release
+        update_cache: yes
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+    - name: Install Docker CE
+      apt:
+          name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+          update_cache: yes
+    - name: start docker
+      systemd:
+        name: docker
+        enabled: yes
+    - name: Configuring Cgroup driver
+      shell:  |
+            cat <<EOF | sudo tee /etc/docker/daemon.json
+                  {
+                    "exec-opts": ["native.cgroupdriver=systemd"],
+                    "log-driver": "json-file",
+                    "log-opts": {
+                      "max-size": "100m"
+                    },
+                    "storage-driver": "overlay2"
+                  }
+                  EOF
+    - name: Restart network service for interface eth0
+      service:
+        name: docker
+        state: restarted
+        daemon_reload: yes
+    - name: install apt-transport-https
+      apt: 
+        pkg:
+          - apt-transport-https
+    - name: Add GCP public signing key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    - name: add kubernetes repository
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    - name: install kubeadm kubelet and kubectl
+      apt:
+          name: 
+            - kubelet=1.23.1-00
+            - kubectl=1.23.1-00
+            - kubeadm=1.23.1-00
+          update_cache: yes
