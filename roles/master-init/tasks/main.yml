@@ -8,19 +8,17 @@
       register: init_cluster
       when: reset_cluster is succeeded
 
-    - name: Create Kubernetes config directory
+    - name: create .kube repo
       file:
-        path: "$HOME/.kube/"
-        state: directory
-
+          path: .kube
+          state: directory
+    
     - name: Copy admin.conf to Home directory
       copy:
-        src: "/etc/kubernetes/admin.conf"
-        dest: "$HOME/.kube/config"
-        owner: "{{ ansible_user | default(ansible_user_id) }}"
-        group: "{{ ansible_user | default(ansible_user_id) }}"
-        mode: 0755
-        remote_src: true
+          src: "/etc/kubernetes/admin.conf"
+          dest: .kube/config
+          mode: 0755
+          remote_src: true  
 
     - name: download calico
       get_url:

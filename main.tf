@@ -60,6 +60,6 @@ resource "null_resource" "execute_ansible" {
     local_file.ansible_inventory
   ]
   provisioner "local-exec" {
-    command = "ansible-playbook -i hosts-result.ini, --private-key gl5-ssh.pen kubernetes.yaml"
+    command = "ansible-playbook -i ./hosts-result.ini --private-key gl5-ssh.pem kubernetes.yaml"
   }
 }
