@@ -1,9 +1,32 @@
-- name: create repo
-  hosts: all
-  remote_user: azureuser
-  become: yes
-  tasks:
-    - name: setup kubeadm environment
-      import_role:
-        name: kubernetes-env-setup
+    # - hosts: all
+    #   name: setup kubeadm environment
+    #   roles:
+    #     - { role: kubernetes-env-setup, tags: kubernetes-env-setup }
+    #   become: yes
+
+    # - hosts: master
+    #   name: setup master cluster
+    #   roles:
+    #     - { role: master-init, tags: master-init }
+    #   become: yes 
+
+    - hosts: master
+      name: Generate Token
+      tasks:
+        - name: create join token
+          shell: sudo kubeadm token create --print-join-command
+          register: join_token
+        - name: adding workers hosts
+          add_host:
+            groups: workers 
+        - name: save join token
+          shell: " echo {{ join_token.stdout }} > join.txt" 
       become: yes
+
+    # - hosts: all
+    #   name: join tken
+    #   become: yes
+    #   tasks:
+    #     - name: save join token
+    #       shell: " echo {{ join_token.stdout }} > join.txt"
+

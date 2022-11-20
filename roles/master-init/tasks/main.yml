@@ -1,0 +1,45 @@
+---
+    - name: reset kubernetes component
+      shell: kubeadm reset --force
+      register: reset_cluster
+
+    - name: Initializing the control-plane node
+      shell: kubeadm init --apiserver-advertise-address={{ private_ip_address }} --pod-network-cidr={{pod_cidr_block}}
+      register: init_cluster
+      when: reset_cluster is succeeded
+
+    - name: Create Kubernetes config directory
+      file:
+        path: "$HOME/.kube/"
+        state: directory
+
+    - name: Copy admin.conf to Home directory
+      copy:
+        src: "/etc/kubernetes/admin.conf"
+        dest: "$HOME/.kube/config"
+        owner: "{{ ansible_user | default(ansible_user_id) }}"
+        group: "{{ ansible_user | default(ansible_user_id) }}"
+        mode: 0755
+        remote_src: true
+
+    - name: download calico
+      get_url:
+        url: https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+        dest: . 
+
+    - name: installing tigera calico operator
+      shell: kubectl create -f tigera-operator.yaml
+
+    - name: download calico
+      get_url:
+        url: https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
+        dest: .    
+
+    - name: change custom resource cidr block value
+      ansible.builtin.replace:
+        path: custom-resources.yaml
+        regexp: '^(.*)cidr: 192\.168\.0\.0/16(.*)$'
+        replace: '\1cidr: {{ pod_cidr_block }}\2'
+        
+    - name: kubectl create the ressource
+      shell: kubectl create -f "custom-resources.yaml" 

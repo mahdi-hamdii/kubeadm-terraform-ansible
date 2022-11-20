@@ -1,0 +1,2 @@
+private_ip_address: "10.0.2.8"
+pod_cidr_block: "10.1.0.0/16"
