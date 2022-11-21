@@ -39,3 +39,8 @@ terraform.rc
 
 /terraform/gl5-ssh.pem
 # End of https://www.toptal.com/developers/gitignore/api/terraform
+
+gl5-ssh.pem
+id_rsa.pub
+terraform.tfstate
+terraform.tfstate.backup
