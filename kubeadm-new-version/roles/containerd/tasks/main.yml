@@ -1,0 +1,70 @@
+---
+############### Installing Containerd  ###############
+- name: Install Containerd
+  hosts: all
+  remote_user: ubuntu
+  become: true
+  tasks:
+  - name: Remove the old container runtimes
+    vars: 
+      packages:
+      - docker
+      - docker-engine
+      - docker.io
+    apt:
+      name: "{{ packages }}"
+      state: absent
+      update_cache: yes
+
+  - name: Install CA certificates, curl and gnupg
+    vars:
+      packages:
+      - ca-certificates
+      - curl 
+      - gnupg
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+  
+  - name: Create keyrings folder
+    file: 
+      path: /etc/apt/keyrings
+      state: directory
+      mode: 0755
+  
+  - name: Add Docker GPG key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+  
+  - name: Add Docker APT repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+
+  - name: Install containerd
+    apt:
+      name: containerd.io
+      state: present
+      update_cache: yes
+
+  - name: Apply the default configuration for the containerd
+    shell: | 
+      sudo containerd config default | sudo tee /etc/containerd/config.toml
+
+############### Configuring the systemd cgroup driver ###############
+- name: Configuring the systemd cgroup driver
+  hosts: all
+  remote_user: ubuntu
+  become: true
+  tasks:
+  - name: replace line
+    lineinfile: 
+      path: /etc/containerd/config.toml
+      regexp: 'SystemdCgroup = false' 
+      line: '            SystemdCgroup = true'
+      backrefs: yes
+
+  - name: Restaring Containerd
+    systemd:
+      state: restarted
+      name: containerd
