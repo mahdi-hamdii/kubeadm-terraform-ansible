@@ -1,0 +1,42 @@
+--- 
+############## kube-prerequisites ###############
+- hosts: all
+  name: setup kube prerequisites
+  roles:
+    - { role: kube-prerequisites, tags: kube-prerequisites }
+  become: yes
+
+############## Install containerd ###############
+- hosts: all
+  name: Install containerd
+  roles:
+    - { role: containerd, tags: containerd }
+  become: yes
+
+############## Install kubeadm-kubelet-kubectl ###############
+- hosts: all
+  name: Install kubeadm-kubelet-kubectl
+  roles:
+    - { role: kubadm-kubelet-kubectl, tags: kubadm-kubelet-kubectl }
+  become: yes
+
+############## Configure the cluster ###############
+- hosts: kubemaster
+  name: cluster init and installing flannel networking solution
+  remote_user: ubuntu
+  become: true
+  roles:
+    - { role: cluster-init, tags: cluster-init }
+
+############## Join the worker nodes to the cluster ###############
+- hosts: workers
+  name: copy token to workers
+  become: yes
+  tasks:
+    - name: save join token to workers
+      copy: 
+          src: "{{ playbook_dir }}/buffer/join.sh"
+          dest: "./"
+    - name: execute join token
+      command: sh join.sh
+
