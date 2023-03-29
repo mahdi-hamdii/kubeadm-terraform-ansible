@@ -1,10 +1,5 @@
 ---
 ############### Installing Containerd  ###############
-- name: Install Containerd
-  hosts: all
-  remote_user: ubuntu
-  become: true
-  tasks:
   - name: Remove the old container runtimes
     vars: 
       packages:
@@ -52,11 +47,6 @@
       sudo containerd config default | sudo tee /etc/containerd/config.toml
 
 ############### Configuring the systemd cgroup driver ###############
-- name: Configuring the systemd cgroup driver
-  hosts: all
-  remote_user: ubuntu
-  become: true
-  tasks:
   - name: replace line
     lineinfile: 
       path: /etc/containerd/config.toml

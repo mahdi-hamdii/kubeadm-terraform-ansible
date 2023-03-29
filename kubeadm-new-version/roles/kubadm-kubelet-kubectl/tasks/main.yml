@@ -1,0 +1,46 @@
+---
+############### Installing kubeadm, kubelet and kubectl  ###############
+  - name: Install apt-transport-https, ca-certificates and curl
+    vars:
+      packages:
+      - apt-transport-https 
+      - ca-certificates 
+      - curl
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+  
+  # - name: Create kubernetes repo file 
+  #   file:
+  #     path: /etc/apt/sources.list.d/kubernetes.list
+  #     state: touch
+
+  # - name: Add the kubernetes gpg key 
+  #   get_url:
+  #     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  #     dest: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+  # - name: add k8s sources
+  #   blockinfile:
+  #     path: /etc/apt/sources.list.d/kubernetes.list
+  #     block: deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
+
+  - name: Add GCP public signing key
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - name: add kubernetes repository
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+
+  - name: Install kubelet kubeadm kubectl
+    apt:
+      name: 
+        - kubelet=1.26.0-00  
+        - kubeadm=1.26.0-00 
+        - kubectl=1.26.0-00
+      state: present
+      update_cache: yes
+  
+  - name: Hold kubelet kubeadm kubectl
+    shell: sudo apt-mark hold kubelet kubeadm kubectl
