@@ -1,0 +1,62 @@
+---
+############### Create cluster with kubeadm - DONE ###############
+- name: reset kubernetes component
+  shell: kubeadm reset --force
+  register: reset_cluster
+
+- name: Initializing the control-plane node
+  shell: kubeadm init --apiserver-advertise-address={{ private_ip_address }} --pod-network-cidr={{pod_cidr_block}}
+  register: init_cluster
+  when: reset_cluster is succeeded
+
+
+- name: create .kube directory
+  file:
+    path: "$HOME/.kube/"
+    state: directory
+    mode: 0755
+  # TODO - Change this dynamically
+- name: Copy admin.conf to Home directory
+  copy:
+      src: "/etc/kubernetes/admin.conf"
+      dest: "$HOME/.kube/config"
+      owner: "{{ ansible_user | default(ansible_user_id) }}"
+      group: "{{ ansible_user | default(ansible_user_id) }}"
+      mode: 0755
+      remote_src: true
+
+############## Apply a networking solution (flannel with helm) ###############
+- name: Install Helm
+  shell: |
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh 
+- name: Apply flannel
+# TODO - change the IP dynamically
+  shell: |
+    kubectl create ns kube-flannel
+    kubectl label --overwrite ns kube-flannel pod-security.kubernetes.io/enforce=privileged
+    helm install flannel --set podCidr={{ pod_cidr_block }} --namespace kube-flannel https://github.com/flannel-io/flannel/releases/latest/download/flannel.tgz
+
+############## Join the worker nodes ###############
+- name: create join token
+  shell: sudo kubeadm token create --print-join-command
+  register: join_token
+
+- name: save join token
+  shell: " echo {{ join_token.stdout }} > join.sh"
+
+- name: save to local 
+  run_once: yes
+  fetch: src=join.sh dest="{{ playbook_dir }}/buffer/" flat=yes
+
+- name: create .kube repo
+  file:
+    path: .kube
+    state: directory
+
+- name: Copy admin.conf to Home directory
+  copy:
+    src: "/etc/kubernetes/admin.conf"
+    dest: .kube/config
+    remote_src: true
