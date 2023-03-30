@@ -31,7 +31,7 @@ resource "azurerm_linux_virtual_machine" "workers" {
   admin_username      = var.worker-admin-username
   admin_ssh_key {
     username   = var.worker-admin-username
-    public_key = file("./id_rsa.pub")
+    public_key = file(var.public_ssh_key)
   }
   network_interface_ids = [
     azurerm_network_interface.worker-nics[count.index].id,
