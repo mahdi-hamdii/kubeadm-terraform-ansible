@@ -55,3 +55,13 @@ variable "private_key_path" {
 variable "master_size" {
   type = string
 }
+
+variable "private_ssh_key" {
+  type    = string
+  default = "id_rsa_finaxys"
+}
+
+variable "public_ssh_key" {
+  type    = string
+  default = "./id_rsa_finaxys.pub"
+}
